@@ -343,8 +343,13 @@ function FurnitureEditor() {
                         }}>
                             {selected.img ? (
                                 <>
+                                    {/*<img*/}
+                                    {/*    src={selected.img.startsWith('http') ? selected.img : `http://localhost:8080/${selected.img.replace(/^\//, '')}`}*/}
+                                    {/*    alt="Фото мебели"*/}
+                                    {/*    style={{ width: '100%', height: '100%', objectFit: 'cover' }}*/}
+                                    {/*/>*/}
                                     <img
-                                        src={selected.img.startsWith('http') ? selected.img : `http://localhost:8080/${selected.img.replace(/^\//, '')}`}
+                                        src={selected.img}
                                         alt="Фото мебели"
                                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                     />

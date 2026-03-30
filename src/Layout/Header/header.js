@@ -1,12 +1,12 @@
 import React, {useContext} from 'react';
 import './header.scss';
 import logo from '../img_layout/logo.svg'; // поправь путь, если нужно
-import defaultAvatar from '../img_layout/avatar_img.jpg'; // заглушка
+import './header.scss';
+import defaultAvatar from '../img_layout/avatar_img.jpg';
 import exitImg from '../img_layout/exit_img.svg';
-import {Link, useLocation, useNavigate} from 'react-router-dom';
-import {CustomContext} from '../../Context'; // путь к твоему Context
-import {animateScroll} from "react-scroll";
-
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { CustomContext } from '../../Context';
+import { animateScroll } from "react-scroll";
 
 const Header = () => {
     const location = useLocation();
@@ -39,11 +39,7 @@ const Header = () => {
                             {currentUser.avatar ? (
                                 <img src={currentUser.avatar} alt="avatar" className="header__avatar" />
                             ) : (
-                                <img
-                                    src={currentUser.avatar || defaultAvatar}
-                                    alt="Avatar"
-                                    className="header__top__right__user__avatar"
-                                />
+                                <img src={defaultAvatar} alt="avatar" className="header__top__right__user__avatar" />
                             )}
                             <span className="header__top__right__user__username">{currentUser.fullName}</span>
                         </div>
