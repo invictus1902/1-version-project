@@ -115,25 +115,6 @@ const Header = () => {
                     <div className="header__mobile-menu__content">
                         {/* Навигация */}
                         <nav className="header__mobile-nav">
-                            {currentUser?.role === 'admin' && (
-                                <>
-                                    <Link
-                                        to="/admin"
-                                        onClick={() => { toTop(); setMenuOpen(false); }}
-                                        className={`header__mobile-link ${isActive('/admin') ? 'active' : ''}`}
-                                    >
-                                        Панель администратора
-                                    </Link>
-                                    <Link
-                                        to="/edit_mebel"
-                                        onClick={() => { toTop(); setMenuOpen(false); }}
-                                        className={`header__mobile-link ${isActive('/edit_mebel') ? 'active' : ''}`}
-                                    >
-                                        Редактор мебели
-                                    </Link>
-                                </>
-                            )}
-
                             <Link
                                 to="/"
                                 onClick={() => { toTop(); setMenuOpen(false); }}
@@ -141,6 +122,24 @@ const Header = () => {
                             >
                                 Каталог мебели
                             </Link>
+                            {currentUser?.role === 'admin' && (
+                                <>
+                                    <Link
+                                        to="/edit_mebel"
+                                        onClick={() => { toTop(); setMenuOpen(false); }}
+                                        className={`header__mobile-link ${isActive('/edit_mebel') ? 'active' : ''}`}
+                                    >
+                                        Редактор мебели
+                                    </Link>
+                                    <Link
+                                        to="/admin"
+                                        onClick={() => { toTop(); setMenuOpen(false); }}
+                                        className={`header__mobile-link ${isActive('/admin') ? 'active' : ''}`}
+                                    >
+                                        Панель администратора
+                                    </Link>
+                                </>
+                            )}
                         </nav>
 
                         {/* Информация об аккаунте + Выход */}
