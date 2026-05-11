@@ -78,6 +78,22 @@ const Header = () => {
                                 >
                                     Редактор мебели
                                 </Link>
+                                <Link
+                                    to="/placing_an_order"
+                                    onClick={toTop}
+                                    className={`header__link ${isActive('/placing_an_order') ? 'header__menu_nav_left__active' : 'header__menu_nav_left__botton'}`}
+                                >
+                                    Оформление заказа
+                                </Link>
+                                <Link
+                                    to="/view_orders"
+                                    onClick={toTop}
+                                    className={`header__link ${isActive('/view_orders') ? 'header__menu_nav_left__active' : 'header__menu_nav_left__botton'}`}
+                                >
+                                    Просмотр заказов
+                                </Link>
+
+
                             </>
                         )}
                         <Link to="/" onClick={() => toTop()}>
@@ -138,6 +154,21 @@ const Header = () => {
                                     >
                                         Панель администратора
                                     </Link>
+                                    <Link
+                                        to="/edit_order"
+                                        onClick={() => { toTop(); setMenuOpen(false); }}
+                                        className={`header__mobile-link ${isActive('/edit_order') ? 'active' : ''}`}
+                                    >
+                                        Редактор заказов
+                                    </Link>
+                                    <Link
+                                        to="/placing_an_order"
+                                        onClick={() => { toTop(); setMenuOpen(false); }}
+                                        className={`header__mobile-link ${isActive('/placing_an_order') ? 'active' : ''}`}
+                                    >
+                                        Оформить заказ
+                                    </Link>
+
                                 </>
                             )}
                         </nav>
