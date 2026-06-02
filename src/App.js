@@ -2,15 +2,16 @@ import './App.scss';
 import React, { useContext } from 'react';
 import { Route, Routes, Navigate } from 'react-router-dom';
 import Layout from "./Layout/Layout";
-import SingIn from "./all_pages/sing_in/sing_in";
+import SingIn from "./all_pages/auth/auth";
 import Admin from "./all_pages/admin/admin";
-import Catalog from "./all_pages/catalog_mebeli/catalog";
-import EditMebel from "./all_pages/edit_mebel/edit_mebel";
+import Catalog from "./all_pages/legacy/catalog/catalog";
+import EditMebel from "./all_pages/legacy/furniture_editor/edit_mebel";
 import { CustomContext } from './Context';
-import Order from "./all_pages/order/order";
-import Order_editor from "./all_pages/order_editor/order_editor";
-import PlacingAnOrder from "./all_pages/placing_an_order/placing_an_order";
-import View_orders from './all_pages/view_orders/view_orders'
+import Order from "./all_pages/legacy/order/order";
+import Order_editor from "./all_pages/legacy/order_editor/order_editor";
+import PlacingAnOrder from "./all_pages/legacy/order_form/placing_an_order";
+import View_orders from './all_pages/legacy/view_orders/view_orders'
+import PersonalCabinet from "./all_pages/cabinet/cabinet";
 
 function App() {
     const { currentUser, loading } = useContext(CustomContext);
@@ -27,16 +28,29 @@ function App() {
         <Routes>
             <Route path="/signin" element={<SingIn />} />
             <Route path="/" element={<Layout />}>
+                {/* === Только для админов === */}
                 {currentUser?.role === 'admin' && (
                     <>
                         <Route path="edit_mebel" element={<EditMebel />}/>
                         <Route path="admin" element={<Admin />} />
                         <Route path="/placing_an_order" element={<PlacingAnOrder />} />
-                        <Route path="/view_orders" element={<View_orders />} />
                         <Route path="/order_editor/:id" element={<Order_editor />} />
                     </>
                 )}
-                <Route index element={<Catalog />}/>
+
+                {/* === Доступно всем авторизованным пользователям === */}
+                <Route path="/view_orders" element={<View_orders />} />
+                <Route path="cabinet" element={<PersonalCabinet />} />
+
+                {/* Главная страница */}
+                <Route 
+                    index 
+                    element={
+                        currentUser?.role === 'admin' 
+                            ? <Catalog /> 
+                            : <Navigate to="/cabinet" replace />
+                    } 
+                />
                 <Route path="/order/:id" element={<Order />} />
             </Route>
 

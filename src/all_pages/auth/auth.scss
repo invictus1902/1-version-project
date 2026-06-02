@@ -1,4 +1,4 @@
-.sing_in {
+.auth {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -145,7 +145,7 @@
     }
   }
 }
-.sing_in__error {
+.auth__error {
   color: #d32f2f;
   font-size: 14px;
   margin-top: 8px;
@@ -153,7 +153,7 @@
   font-weight: 500;
 }
 
-.sing_in__main__bottom form input:focus {
+.auth__main__bottom form input:focus {
   border-color: #0F74C7FF;
   box-shadow: 0 0 0 3px rgba(15, 116, 199, 0.2);
 }

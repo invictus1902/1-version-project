@@ -1,7 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CustomContext } from '../../Context';
-import './sing_in.scss';
+import './auth.scss';
 
 const SingIn = () => {
     const [login, setLogin] = useState('');
@@ -39,14 +39,14 @@ const SingIn = () => {
     };
 
     return (
-        <div className="sing_in">
-            <div className="sing_in__main">
-                <div className="sing_in__main__center">
+        <div className="auth">
+            <div className="auth__main">
+                <div className="auth__main__center">
                     <h1>TimeTrack</h1>
                     <p>Войдите, чтобы продолжить работу</p>
                 </div>
 
-                <div className="sing_in__main__bottom">
+                <div className="auth__main__bottom">
                     <form onSubmit={handleSubmit}>
                         <p>Логин или email</p>
                         <input
@@ -65,7 +65,7 @@ const SingIn = () => {
                             onChange={(e) => setPassword(e.target.value)}
                         />
 
-                        {error && <p className="sing_in__error">{error}</p>}
+                        {error && <p className="auth__error">{error}</p>}
 
                         <button type="submit" disabled={loading}>
                             {loading ? 'Вход...' : 'Войти'}

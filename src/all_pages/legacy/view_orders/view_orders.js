@@ -1,14 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import './view_orders.scss';
+import { CustomContext } from '../../../Context';
 
 const ViewOrders = () => {
+    const { currentUser } = useContext(CustomContext);
+    const isAdmin = currentUser?.role === 'admin';
+
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Для отладки: временно отключаем проверку роли, как указано
-    // const isAdmin = localStorage.getItem('role') === 'admin';
+    // Роль определяется через Context выше
 
     useEffect(() => {
         const fetchOrders = async () => {
@@ -61,10 +64,11 @@ const ViewOrders = () => {
                                 <Link to={`/order/${order.id}`} className="button view">
                                     Просмотреть заказ
                                 </Link>
-                                {/* Временно без условия isAdmin, как указано */}
-                                <Link to={`/order_editor/${order.id}`} className="button edit">
-                                    Редактировать заказ
-                                </Link>
+                                {isAdmin && (
+                                    <Link to={`/order_editor/${order.id}`} className="button edit">
+                                        Редактировать заказ
+                                    </Link>
+                                )}
                             </div>
                         </div>
                     ))}

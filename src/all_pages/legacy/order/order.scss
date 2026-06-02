@@ -1,0 +1,536 @@
+/* =====================================================
+   ПРОСМОТР ЗАКАЗА (ORDER VIEW) — ПОЛНЫЙ РЕДИЗАЙН С НУЛЯ
+   В едином стиле с "Личный кабинет" и "Оформление заказа"
+   Чистый, профессиональный, удобный для просмотра и печати
+   ===================================================== */
+
+.order-page {
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  padding: 28px 36px;
+  background: #f8fafc;
+  min-height: calc(100vh - 80px);
+  color: #1f2937;
+
+  &__content {
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+
+  /* ===== HEADER ===== */
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 24px;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+  }
+
+  &__title {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+
+    h1 {
+      font-size: 30px;
+      font-weight: 700;
+      color: #0f172a;
+      margin: 0;
+      letter-spacing: -0.4px;
+    }
+  }
+
+  &__status {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 16px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: #ecfdf5;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+
+    /* Можно расширить по статусам если понадобится */
+    &--draft {
+      background: #fef3c7;
+      color: #92400e;
+      border-color: #fcd34d;
+    }
+  }
+
+  &__header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  &__total-pill {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    padding: 8px 20px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+
+    strong {
+      color: #0F74C7;
+      font-size: 20px;
+      font-weight: 700;
+    }
+  }
+
+  &__pdf-btn {
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid transparent;
+
+    &--primary {
+      background: #0F74C7;
+      color: white;
+
+      &:hover {
+        background: #0c5aa0;
+        box-shadow: 0 4px 12px rgba(15, 116, 199, 0.3);
+      }
+    }
+
+    &--secondary {
+      background: white;
+      color: #334155;
+      border-color: #cbd5e1;
+
+      &:hover {
+        background: #f8fafc;
+        border-color: #94a3b8;
+      }
+    }
+  }
+
+  /* ===== META / INFO SECTION ===== */
+  &__meta {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 20px;
+    margin-bottom: 32px;
+
+    @media (max-width: 900px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  &__client-card,
+  &__meta-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 22px 24px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  }
+
+  &__client-card {
+    h3 {
+      margin: 0 0 14px;
+      font-size: 15px;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+
+    .client-name {
+      font-size: 21px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 4px;
+    }
+
+    .client-company {
+      font-size: 15px;
+      color: #475569;
+      margin-bottom: 14px;
+    }
+
+    .client-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 6px;
+      font-size: 14.5px;
+
+      .label {
+        color: #64748b;
+        min-width: 68px;
+        flex-shrink: 0;
+      }
+
+      .value {
+        color: #1f2937;
+        font-weight: 500;
+      }
+    }
+
+    .note {
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px dashed #e2e8f0;
+      font-size: 14px;
+      color: #475569;
+      font-style: italic;
+    }
+  }
+
+  &__meta-card {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+
+    .meta-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 14.5px;
+
+      .label {
+        color: #64748b;
+      }
+
+      .value {
+        font-weight: 600;
+        color: #1f2937;
+      }
+    }
+
+    .grand-total {
+      margin-top: auto;
+      padding-top: 14px;
+      border-top: 1px solid #e2e8f0;
+      font-size: 15px;
+
+      .value {
+        font-size: 24px;
+        font-weight: 700;
+        color: #0F74C7;
+      }
+    }
+  }
+
+  /* ===== POSITIONS SECTION ===== */
+  &__positions-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e2e8f0;
+
+    h2 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #0f172a;
+      margin: 0;
+
+      span {
+        color: #64748b;
+        font-weight: 500;
+      }
+    }
+
+    .count {
+      font-size: 14px;
+      color: #64748b;
+    }
+  }
+
+  &__positions-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: 16px;
+  }
+
+  /* ===== POSITION CARD — в стиле новых карточек оформления заказа ===== */
+  &__position-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    overflow: hidden;
+    display: flex;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.06), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &:hover {
+      box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+      border-color: #cbd5e1;
+    }
+
+    img {
+      width: 112px;
+      height: 112px;
+      object-fit: cover;
+      border-right: 1px solid #f1f5f9;
+      flex-shrink: 0;
+      background: #f8fafc;
+    }
+
+    .position-main {
+      padding: 16px 18px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .position-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #0f172a;
+      margin: 0 0 6px;
+      line-height: 1.3;
+    }
+
+    .position-desc {
+      font-size: 13.5px;
+      color: #64748b;
+      margin-bottom: 10px;
+      line-height: 1.4;
+    }
+  }
+
+  /* Цвет (переиспользуем красивый паттерн из оформления заказа) */
+  .color-preview {
+    margin: 6px 0 10px;
+    padding: 7px 9px;
+    background: #f8fafc;
+    border-radius: 9px;
+    border: 1px solid #e2e8f0;
+  }
+
+  .color-preview-title {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-bottom: 4px;
+  }
+
+  .color-unified {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .color-swatch-large {
+    width: 42px;
+    height: 26px;
+    border-radius: 5px;
+    border: 1px solid #e2e8f0;
+    object-fit: cover;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+    flex-shrink: 0;
+  }
+
+  .color-name {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #334155;
+  }
+
+  .color-separate {
+    display: flex;
+    gap: 12px;
+  }
+
+  .color-pair {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .color-pair-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748b;
+    width: 48px;
+    flex-shrink: 0;
+  }
+
+  .color-swatch-small {
+    width: 32px;
+    height: 20px;
+    border-radius: 4px;
+    border: 1px solid #e2e8f0;
+    object-fit: cover;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+    flex-shrink: 0;
+  }
+
+  .position-price {
+    margin-top: auto;
+    padding-top: 10px;
+    border-top: 1px dashed #e2e8f0;
+    font-size: 14px;
+    color: #475569;
+
+    strong {
+      color: #0f172a;
+      font-weight: 700;
+    }
+  }
+
+  .position-toggle {
+    margin-top: 10px;
+    align-self: flex-start;
+    padding: 5px 12px;
+    background: #f1f5f9;
+    color: #334155;
+    border: 1px solid #e2e8f0;
+    border-radius: 7px;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+
+    &:hover {
+      background: #e2e8f0;
+    }
+  }
+
+  .position-details-expanded {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #f1f5f9;
+  }
+
+  .details-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+
+    th, td {
+      padding: 7px 10px;
+      text-align: left;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    th {
+      background: #f8fafc;
+      font-weight: 600;
+      color: #475569;
+      font-size: 12px;
+    }
+
+    td {
+      color: #334155;
+    }
+  }
+
+  /* ===== FOOTER / SUMMARY BAR ===== */
+  &__summary-bar {
+    margin-top: 32px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 18px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+
+    .summary-text {
+      font-size: 15px;
+      color: #475569;
+
+      strong {
+        color: #0f172a;
+        font-size: 22px;
+        font-weight: 700;
+      }
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+    }
+  }
+
+  /* ===== STATES ===== */
+  .loading,
+  .error,
+  .empty {
+    max-width: 420px;
+    margin: 120px auto;
+    text-align: center;
+    padding: 48px 24px;
+    background: white;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  }
+
+  .loading {
+    font-size: 17px;
+    color: #64748b;
+  }
+
+  .error {
+    color: #dc2626;
+    font-weight: 600;
+  }
+
+  .empty {
+    color: #64748b;
+  }
+}
+
+/* Адаптив */
+@media (max-width: 960px) {
+  .order-page {
+    padding: 20px 16px;
+
+    &__positions-list {
+      grid-template-columns: 1fr;
+    }
+
+    &__header {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    &__header-actions {
+      width: 100%;
+      justify-content: flex-end;
+    }
+  }
+}
+
+@media (max-width: 640px) {
+  .order-page__position-card {
+    flex-direction: column;
+
+    img {
+      width: 100%;
+      height: 180px;
+      border-right: none;
+      border-bottom: 1px solid #f1f5f9;
+    }
+  }
+}

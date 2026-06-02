@@ -62,6 +62,33 @@ const Header = () => {
                 <div className="header__menu_nav_left">
                     <p className="header__menu_nav_left__name">Management</p>
                     <nav className="">
+                        <Link to="/" onClick={() => toTop()}>
+                            <p className={isActive('/') ? 'header__menu_nav_left__active' : 'header__menu_nav_left__botton'}>
+                                Каталог мебели
+                            </p>
+                        </Link>
+
+                        {/* === Ссылки для обычного сотрудника === */}
+                        {currentUser && currentUser.role !== 'admin' && (
+                            <>
+                                <Link
+                                    to="/cabinet"
+                                    onClick={toTop}
+                                    className={`header__link ${isActive('/cabinet') ? 'header__menu_nav_left__active' : 'header__menu_nav_left__botton'}`}
+                                >
+                                    Личный кабинет
+                                </Link>
+                                <Link
+                                    to="/view_orders"
+                                    onClick={toTop}
+                                    className={`header__link ${isActive('/view_orders') ? 'header__menu_nav_left__active' : 'header__menu_nav_left__botton'}`}
+                                >
+                                    Просмотр заказов
+                                </Link>
+                            </>
+                        )}
+
+                        {/* === Полный набор для администратора (включая личную панель) === */}
                         {currentUser?.role === 'admin' && (
                             <>
                                 <Link
@@ -92,15 +119,15 @@ const Header = () => {
                                 >
                                     Просмотр заказов
                                 </Link>
-
-
+                                <Link
+                                    to="/cabinet"
+                                    onClick={toTop}
+                                    className={`header__link ${isActive('/cabinet') ? 'header__menu_nav_left__active' : 'header__menu_nav_left__botton'}`}
+                                >
+                                    Личный кабинет
+                                </Link>
                             </>
                         )}
-                        <Link to="/" onClick={() => toTop()}>
-                            <p className={isActive('/') ? 'header__menu_nav_left__active' : 'header__menu_nav_left__botton'}>
-                                Каталог мебели
-                            </p>
-                        </Link>
 
 
                     </nav>
@@ -138,15 +165,30 @@ const Header = () => {
                             >
                                 Каталог мебели
                             </Link>
-                            {currentUser?.role === 'admin' && (
+
+                            {/* === Ссылки для обычного сотрудника === */}
+                            {currentUser && currentUser.role !== 'admin' && (
                                 <>
                                     <Link
-                                        to="/edit_mebel"
+                                        to="/cabinet"
                                         onClick={() => { toTop(); setMenuOpen(false); }}
-                                        className={`header__mobile-link ${isActive('/edit_mebel') ? 'active' : ''}`}
+                                        className={`header__mobile-link ${isActive('/cabinet') ? 'active' : ''}`}
                                     >
-                                        Редактор мебели
+                                        Личный кабинет
                                     </Link>
+                                    <Link
+                                        to="/view_orders"
+                                        onClick={() => { toTop(); setMenuOpen(false); }}
+                                        className={`header__mobile-link ${isActive('/view_orders') ? 'active' : ''}`}
+                                    >
+                                        Просмотр заказов
+                                    </Link>
+                                </>
+                            )}
+
+                            {/* === Полный набор для администратора (включая личную панель) === */}
+                            {currentUser?.role === 'admin' && (
+                                <>
                                     <Link
                                         to="/admin"
                                         onClick={() => { toTop(); setMenuOpen(false); }}
@@ -155,11 +197,11 @@ const Header = () => {
                                         Панель администратора
                                     </Link>
                                     <Link
-                                        to="/edit_order"
+                                        to="/edit_mebel"
                                         onClick={() => { toTop(); setMenuOpen(false); }}
-                                        className={`header__mobile-link ${isActive('/edit_order') ? 'active' : ''}`}
+                                        className={`header__mobile-link ${isActive('/edit_mebel') ? 'active' : ''}`}
                                     >
-                                        Редактор заказов
+                                        Редактор мебели
                                     </Link>
                                     <Link
                                         to="/placing_an_order"
@@ -168,7 +210,20 @@ const Header = () => {
                                     >
                                         Оформить заказ
                                     </Link>
-
+                                    <Link
+                                        to="/view_orders"
+                                        onClick={() => { toTop(); setMenuOpen(false); }}
+                                        className={`header__mobile-link ${isActive('/view_orders') ? 'active' : ''}`}
+                                    >
+                                        Просмотр заказов
+                                    </Link>
+                                    <Link
+                                        to="/cabinet"
+                                        onClick={() => { toTop(); setMenuOpen(false); }}
+                                        className={`header__mobile-link ${isActive('/cabinet') ? 'active' : ''}`}
+                                    >
+                                        Личный кабинет
+                                    </Link>
                                 </>
                             )}
                         </nav>
