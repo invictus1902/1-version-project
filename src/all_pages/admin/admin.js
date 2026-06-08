@@ -2,7 +2,7 @@ import React, { useContext, useState, useMemo } from 'react';
 import { useForm } from "react-hook-form";
 import './admin.scss';
 import { CustomContext } from '../../Context';
-import { parseISO, differenceInMinutes, addDays, format } from 'date-fns';
+import { parseISO, differenceInMinutes, addDays, format, subDays, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 
 // ==================== PURE UTILITIES ====================
 
@@ -56,6 +56,16 @@ const sortSessions = (sessions) =>
     return dateB.localeCompare(dateA) || a.startTime.localeCompare(b.startTime);
   });
 
+// ==================== ПРЕСЕТЫ ПЕРИОДОВ (упрощённые и удобные) ====================
+const PERIOD_PRESETS = [
+  { key: 'today', label: 'Сегодня' },
+  { key: 'week', label: 'Эта неделя' },
+  { key: 'month', label: 'Этот месяц' },
+  { key: 'last_month', label: 'Прошлый месяц' },
+  { key: 'all', label: 'За всё время' },
+  { key: 'custom', label: 'Произвольный' },
+];
+
 const Admin = () => {
     const {
         currentUser,
@@ -77,8 +87,13 @@ const Admin = () => {
     const [isEditSessionModalOpen, setIsEditSessionModalOpen] = useState(false);
     const [editingSession, setEditingSession] = useState(null);
 
-    const [dateFilter, setDateFilter] = useState('today');
-    const [customDate, setCustomDate] = useState(new Date().toISOString().split('T')[0]);
+    // ==================== НОВАЯ МОЩНАЯ ФИЛЬТРАЦИЯ (переделана с нуля по образцу кабинета) ====================
+    const [activePreset, setActivePreset] = useState('month');
+    const [customDateFrom, setCustomDateFrom] = useState('');
+    const [customDateTo, setCustomDateTo] = useState('');
+    const [employeeFilter, setEmployeeFilter] = useState(''); // '' = все, или numeric user.id (coerced from select)
+    const [statusFilter, setStatusFilter] = useState('all'); // all | active | closed
+    const [sortBy, setSortBy] = useState('date_desc');
 
     // Состояния загрузки для защиты от множественных кликов и визуальной обратной связи
     const [pendingShiftActions, setPendingShiftActions] = useState(new Set()); // sessionId
@@ -118,56 +133,154 @@ const Admin = () => {
         withLoading(setPendingShiftActions, sessionId, () => deleteSession(sessionId));
     };
 
-    // ==================== ФИЛЬТРАЦИЯ ====================
+    // ==================== ДИАПАЗОН ДАТ (мощные пресеты + произвольный период) ====================
+    const dateRange = useMemo(() => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        if (activePreset === 'custom' && customDateFrom && customDateTo) {
+            return { from: customDateFrom, to: customDateTo };
+        }
+
+        let from, to;
+
+        switch (activePreset) {
+            case 'today':
+                from = to = format(today, 'yyyy-MM-dd');
+                break;
+            case 'week':
+                from = format(subDays(today, 6), 'yyyy-MM-dd');
+                to = format(today, 'yyyy-MM-dd');
+                break;
+            case 'month':
+                from = format(startOfMonth(today), 'yyyy-MM-dd');
+                to = format(today, 'yyyy-MM-dd');
+                break;
+            case 'last_month': {
+                const lastMonth = subMonths(today, 1);
+                from = format(startOfMonth(lastMonth), 'yyyy-MM-dd');
+                to = format(endOfMonth(lastMonth), 'yyyy-MM-dd');
+                break;
+            }
+            case 'custom':
+                // Пользователь выбрал "Произвольный", но ещё не указал обе даты — показываем всё до заполнения
+                from = '1970-01-01';
+                to = format(today, 'yyyy-MM-dd');
+                break;
+            case 'all':
+            default:
+                from = '1970-01-01';
+                to = format(today, 'yyyy-MM-dd');
+                break;
+        }
+
+        return { from, to };
+    }, [activePreset, customDateFrom, customDateTo]);
+
+    // ==================== ФИЛЬТРАЦИЯ СМЕН (упрощённая) ====================
     const filteredSessions = useMemo(() => {
-        let sessions = [...workSessions];
-        const today = new Date().toISOString().split('T')[0];
+        let result = [...workSessions];
 
-        if (dateFilter === 'today') {
-            // Улучшенная логика для отображения смен в день их завершения:
-            // - Смены, начатые сегодня
-            // - Смены, которые закончились сегодня (даже если начались вчера или раньше) — использует endDate
-            // - Все активные (незакрытые) смены, независимо от даты начала (важно для охраны и длинных смен)
-            sessions = sessions.filter(s => {
-                const startedToday = s.date === today;
-                const endedToday = s.endDate === today;
-                const isStillActive = !s.endTime;
+        // 1. Фильтр по периоду (исправлено: активные и переходящие смены теперь корректно попадают в "Сегодня"/текущие периоды)
+        result = result.filter(s => {
+            const shiftStart = s.date;
+            const shiftEnd = s.endDate || s.date;
+            const isActive = !s.endTime;
+            const rangeFrom = dateRange.from;
+            const rangeTo = dateRange.to;
 
-                // Для старых смен без endDate — показываем по дате начала (fallback)
-                const noEndDateButRelevant = !s.endDate && !s.endTime && startedToday;
+            if (isActive) {
+                // Активные смены (в т.ч. ночные и >24ч) должны быть видны в актуальных представлениях
+                // Показываем их, если выбранный диапазон "дотягивается" до сегодня,
+                // или если начало смены попадает в диапазон.
+                const todayStr = format(new Date(), 'yyyy-MM-dd');
+                const rangeIsCurrent = rangeTo >= todayStr;
 
-                return startedToday || endedToday || isStillActive || noEndDateButRelevant;
+                if (rangeIsCurrent) {
+                    // Для текущих/недавних фильтров показываем все активные, начавшиеся не позже конца диапазона
+                    return shiftStart <= rangeTo;
+                } else {
+                    // Для исторических custom-периодов показываем активную смену только если она реально шла в тот период
+                    return shiftStart >= rangeFrom && shiftStart <= rangeTo;
+                }
+            }
+
+            // Завершённые смены — стандартная проверка пересечения интервалов [start, end]
+            return shiftEnd >= rangeFrom && shiftStart <= rangeTo;
+        });
+
+        // 2. Фильтр по конкретному сотруднику (приводим к числу, т.к. value из <select> — строка)
+        if (employeeFilter != null && employeeFilter !== '') {
+            const targetId = Number(employeeFilter);
+            result = result.filter(s => Number(s.userId) === targetId);
+        }
+
+        // 3. Фильтр по статусу
+        if (statusFilter === 'active') {
+            result = result.filter(s => !s.endTime);
+        } else if (statusFilter === 'closed') {
+            result = result.filter(s => !!s.endTime);
+        }
+
+        // 4. Сортировка
+        if (sortBy === 'date_asc') {
+            result.sort((a, b) => {
+                const da = a.endDate || a.date;
+                const db = b.endDate || b.date;
+                return da.localeCompare(db) || a.startTime.localeCompare(b.startTime);
             });
-        } else if (dateFilter === 'custom' && customDate) {
-            // Для конкретной даты показываем смены, которые либо начались, либо закончились в этот день
-            sessions = sessions.filter(s => {
-                const startedOnDate = s.date === customDate;
-                const endedOnDate = s.endDate === customDate;
-                return startedOnDate || endedOnDate;
+        } else if (sortBy === 'duration_desc') {
+            // Активные смены (без duration) считаем "самыми длинными" — показываем первыми
+            result.sort((a, b) => {
+                const da = a.durationMinutes != null ? a.durationMinutes : (a.endTime ? 0 : Infinity);
+                const db = b.durationMinutes != null ? b.durationMinutes : (b.endTime ? 0 : Infinity);
+                return db - da;
             });
-        } else if (dateFilter === 'all') {
-            const thirtyDaysAgo = new Date();
-            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-            const agoStr = thirtyDaysAgo.toISOString().split('T')[0];
-
-            sessions = sessions.filter(s => {
-                const startOk = s.date >= agoStr;
-                const endOk = s.endDate && s.endDate >= agoStr;
-                return startOk || endOk;
+        } else {
+            // date_desc по умолчанию
+            result.sort((a, b) => {
+                const da = a.endDate || a.date;
+                const db = b.endDate || b.date;
+                return db.localeCompare(da) || b.startTime.localeCompare(a.startTime);
             });
         }
 
-        return sortSessions(sessions);
-    }, [workSessions, dateFilter, customDate]);
+        return result;
+    }, [workSessions, dateRange, employeeFilter, statusFilter, sortBy]);
+
+    // Вспомогательная функция для получения сессий конкретного пользователя из отфильтрованного списка
+    const getFilteredUserSessions = (userId) => {
+        if (userId == null || userId === '') return [];
+        const targetId = Number(userId);
+        return filteredSessions.filter(s => Number(s.userId) === targetId);
+    };
+
+    // ==================== СТАТИСТИКА ПО ФИЛЬТРАМ (полезно для админа) ====================
+    const filterStats = useMemo(() => {
+        const totalShifts = filteredSessions.length;
+        const activeNow = filteredSessions.filter(s => !s.endTime).length;
+
+        const totalMinutes = filteredSessions.reduce((sum, s) => sum + (s.durationMinutes || 0), 0);
+        const totalHours = Math.floor(totalMinutes / 60);
+
+        return { totalShifts, activeNow, totalHours };
+    }, [filteredSessions]);
+
+    // Показываем только выбранного сотрудника, если фильтр активен (гораздо удобнее)
+    const displayUsers = (employeeFilter != null && employeeFilter !== '')
+        ? users.filter(u => Number(u.id) === Number(employeeFilter))
+        : users;
 
     if (!currentUser || currentUser.role !== 'admin') {
         return <div className="access_denied">Доступ запрещён</div>;
     }
 
-    const getUserSessions = (userId) => sortSessions(filteredSessions.filter(s => s.userId === userId));
-
-    const getAllUserSessions = (userId) =>
-        sortSessions(workSessions.filter(s => s.userId === userId));
+    // getAllUserSessions — используется в модалке просмотра профиля (показывает ВСЕ смены сотрудника)
+    const getAllUserSessions = (userId) => {
+        if (userId == null || userId === '') return [];
+        const targetId = Number(userId);
+        return sortSessions(workSessions.filter(s => Number(s.userId) === targetId));
+    };
 
     // ==================== ОБРАБОТЧИКИ ====================
     const openUserForm = (user = null) => {
@@ -340,15 +453,106 @@ const Admin = () => {
                 <div className="admin__top__left">
                     <h1>Панель администратора</h1>
 
-                    <div className="admin__filter">
-                        <select value={dateFilter} onChange={(e) => setDateFilter(e.target.value)}>
-                            <option value="today">Сегодня</option>
-                            <option value="all">Последние 30 дней</option>
-                            <option value="custom">Выбрать дату</option>
-                        </select>
-                        {dateFilter === 'custom' && (
-                            <input type="date" value={customDate} onChange={(e) => setCustomDate(e.target.value)} />
+                    {/* ==================== ФИЛЬТРАЦИЯ СМЕН (упрощённая и удобная) ==================== */}
+                    <div className="admin__filters">
+                        {/* Быстрые пресеты периодов */}
+                        <div className="admin__filters__presets">
+                            {PERIOD_PRESETS.map(preset => (
+                                <button
+                                    key={preset.key}
+                                    className={`preset-btn ${activePreset === preset.key ? 'active' : ''}`}
+                                    onClick={() => setActivePreset(preset.key)}
+                                >
+                                    {preset.label}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Произвольный период */}
+                        {activePreset === 'custom' && (
+                            <div className="admin__filters__custom">
+                                <input
+                                    type="date"
+                                    value={customDateFrom}
+                                    onChange={(e) => setCustomDateFrom(e.target.value)}
+                                    placeholder="Дата с"
+                                />
+                                <span>—</span>
+                                <input
+                                    type="date"
+                                    value={customDateTo}
+                                    onChange={(e) => setCustomDateTo(e.target.value)}
+                                    placeholder="Дата по"
+                                />
+                            </div>
                         )}
+
+                        {/* Компактная панель фильтров */}
+                        <div className="admin__filters__toolbar">
+                            <select
+                                value={employeeFilter}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    const newEmp = val ? Number(val) : '';
+                                    setEmployeeFilter(newEmp);
+                                    // При выборе конкретного сотрудника сразу переключаемся на "За всё время",
+                                    // чтобы его смены (включая старые) сразу отобразились. Пользователь потом может
+                                    // сузить период пресетами, если нужно.
+                                    if (newEmp) {
+                                        setActivePreset('all');
+                                        setCustomDateFrom('');
+                                        setCustomDateTo('');
+                                    }
+                                }}
+                                title="Фильтр по сотруднику"
+                            >
+                                <option value="">Все сотрудники</option>
+                                {users.map(u => (
+                                    <option key={u.id} value={u.id}>{u.fullName}</option>
+                                ))}
+                            </select>
+
+                            <select
+                                value={statusFilter}
+                                onChange={(e) => setStatusFilter(e.target.value)}
+                                title="Фильтр по статусу смены"
+                            >
+                                <option value="all">Все статусы</option>
+                                <option value="active">Только активные</option>
+                                <option value="closed">Только завершённые</option>
+                            </select>
+
+                            <select
+                                value={sortBy}
+                                onChange={(e) => setSortBy(e.target.value)}
+                                title="Сортировка"
+                            >
+                                <option value="date_desc">Сначала новые</option>
+                                <option value="date_asc">Сначала старые</option>
+                                <option value="duration_desc">По длительности ↓</option>
+                            </select>
+
+                            <button
+                                className="reset-btn"
+                                onClick={() => {
+                                    setActivePreset('month');
+                                    setCustomDateFrom('');
+                                    setCustomDateTo('');
+                                    setEmployeeFilter('');
+                                    setStatusFilter('all');
+                                    setSortBy('date_desc');
+                                }}
+                            >
+                                Сбросить
+                            </button>
+                        </div>
+
+                        {/* Живая статистика по текущим фильтрам */}
+                        <div className="admin__filters__stats">
+                            <span>Смен: <strong>{filterStats.totalShifts}</strong></span>
+                            <span>Активных сейчас: <strong>{filterStats.activeNow}</strong></span>
+                            <span>Отработано всего: <strong>{filterStats.totalHours} ч</strong></span>
+                        </div>
                     </div>
 
                     <div className="admin__table">
@@ -362,8 +566,8 @@ const Admin = () => {
                             <span>Действия</span>
                         </div>
 
-                        {users.map(user => {
-                            const sessions = getUserSessions(user.id);
+                        {displayUsers.map(user => {
+                            const sessions = getFilteredUserSessions(user.id);
                             return (
                                 <div key={user.id} className="admin__table__user-group">
                                     <div className="admin__table__user-header">
@@ -373,7 +577,7 @@ const Admin = () => {
 
                                     {sessions.length === 0 ? (
                                         <div className="admin__table__row admin__table__row--empty">
-                                            <span>Смены отсутствуют</span>
+                                            <span>Смены отсутствуют в выбранном фильтре</span>
                                             <span className="admin__table__actions">
                                                 <button 
                                                     onClick={() => handleStartShift(user.id)} 

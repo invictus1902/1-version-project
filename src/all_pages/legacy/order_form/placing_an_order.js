@@ -1,24 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { evaluate } from 'mathjs';
 import { useNavigate } from 'react-router-dom';
 import './placing_an_order.scss';
-
-// Популярная палитра цветов для корпусной мебели (Россия/СНГ, 2024-2025)
-// Источники: Egger, Kronospan, Lamarty, Kastamonu и другие популярные поставщики
-const FURNITURE_COLORS = [
-  { id: 'sonoma', name: 'Дуб Сонома', image: 'https://picsum.photos/id/201/300/200' },
-  { id: 'venge', name: 'Венге', image: 'https://picsum.photos/id/160/300/200' },
-  { id: 'natural-oak', name: 'Дуб Натуральный', image: 'https://picsum.photos/id/251/300/200' },
-  { id: 'milk-oak', name: 'Дуб Молочный', image: 'https://picsum.photos/id/106/300/200' },
-  { id: 'white', name: 'Белый', image: 'https://picsum.photos/id/29/300/200' },
-  { id: 'gray', name: 'Серый', image: 'https://picsum.photos/id/201/300/200' },
-  { id: 'shimo-ash', name: 'Ясень Шимо', image: 'https://picsum.photos/id/180/300/200' },
-  { id: 'bardolino', name: 'Дуб Бардолино', image: 'https://picsum.photos/id/251/300/200' },
-  { id: 'delano', name: 'Дуб Делано', image: 'https://picsum.photos/id/106/300/200' },
-  { id: 'graphite', name: 'Графит', image: 'https://picsum.photos/id/160/300/200' },
-  { id: 'wenge-magic', name: 'Венге Магия', image: 'https://picsum.photos/id/201/300/200' },
-  { id: 'beech', name: 'Бук', image: 'https://picsum.photos/id/251/300/200' },
-];
 
 const PlacingAnOrder = () => {
     const navigate = useNavigate();
@@ -38,6 +21,7 @@ const PlacingAnOrder = () => {
     const [modalOpen, setModalOpen] = useState(false);
     const [modalType, setModalType] = useState('catalog'); // 'catalog' | 'custom'
     const [editingItemId, setEditingItemId] = useState(null); // ID редактируемой позиции
+    const [productSearch, setProductSearch] = useState(''); // поиск в каталоге модалки
 
     // Защита от повторных нажатий
     const [isSaving, setIsSaving] = useState(false);
@@ -61,13 +45,9 @@ const PlacingAnOrder = () => {
     const [inputs, setInputs] = useState({});
     const [customDesc, setCustomDesc] = useState('');
 
-    // Выбор цвета для мебели (новая функциональность)
-    const [colorSelection, setColorSelection] = useState({
-        mode: 'unified', // 'unified' | 'separate'
-        unified: { name: '', image: '' },
-        body: { name: '', image: '' },
-        facade: { name: '', image: '' }
-    });
+    // Простые текстовые поля для цветов (вместо сложного выбора палитры)
+    const [bodyColor, setBodyColor] = useState('');     // Цвет корпуса
+    const [facadeColor, setFacadeColor] = useState(''); // Цвет фасадов
 
     // Для произвольной позиции
     const [customItem, setCustomItem] = useState({
@@ -76,6 +56,13 @@ const PlacingAnOrder = () => {
         quantity: 1,
         description: ''
     });
+
+    // Фильтрованные продукты для модалки (зависит от поиска)
+    const filteredProducts = useMemo(() => {
+        if (!productSearch.trim()) return products;
+        const q = productSearch.toLowerCase().trim();
+        return products.filter(p => p.title && p.title.toLowerCase().includes(q));
+    }, [products, productSearch]);
 
     const DRAFT_KEY = 'order_draft';
 
@@ -138,13 +125,9 @@ const PlacingAnOrder = () => {
         setInputs(init);
         setCustomDesc('');
 
-        // Сброс выбора цвета при смене товара
-        setColorSelection({
-            mode: 'unified',
-            unified: { name: '', image: '' },
-            body: { name: '', image: '' },
-            facade: { name: '', image: '' }
-        });
+        // Сброс цветов при смене товара
+        setBodyColor('');
+        setFacadeColor('');
     }, [selectedProduct]);
 
     const calculateDetails = (product, userInputs) => {
@@ -186,15 +169,31 @@ const PlacingAnOrder = () => {
                     quantity: itemToEdit.quantity,
                     description: itemToEdit.description || ''
                 });
+                // Цвета для произвольных позиций не используются (есть описание)
+                setBodyColor('');
+                setFacadeColor('');
             } else {
                 // Для товаров из каталога
                 setSelectedProduct(products.find(p => p.id === itemToEdit.productId) || null);
                 setInputs({ ...itemToEdit.userInputs });
                 setCustomDesc(itemToEdit.description || '');
 
-                // Загружаем данные по цвету, если они есть
-                if (itemToEdit.colorSelection) {
-                    setColorSelection(itemToEdit.colorSelection);
+                // Загружаем простые цвета (с поддержкой старых colorSelection из черновиков)
+                if (itemToEdit.bodyColor || itemToEdit.facadeColor) {
+                    setBodyColor(itemToEdit.bodyColor || '');
+                    setFacadeColor(itemToEdit.facadeColor || '');
+                } else if (itemToEdit.colorSelection) {
+                    const cs = itemToEdit.colorSelection;
+                    if (cs.mode === 'unified' && cs.unified?.name) {
+                        setBodyColor(cs.unified.name);
+                        setFacadeColor(cs.unified.name);
+                    } else {
+                        setBodyColor(cs.body?.name || '');
+                        setFacadeColor(cs.facade?.name || '');
+                    }
+                } else {
+                    setBodyColor('');
+                    setFacadeColor('');
                 }
             }
         } else {
@@ -203,6 +202,9 @@ const PlacingAnOrder = () => {
             setInputs({});
             setCustomDesc('');
             setCustomItem({ title: '', price: '', quantity: 1, description: '' });
+            setBodyColor('');
+            setFacadeColor('');
+            if (type === 'catalog') setProductSearch('');
         }
     };
 
@@ -213,12 +215,9 @@ const PlacingAnOrder = () => {
         setInputs({});
         setCustomDesc('');
         setCustomItem({ title: '', price: '', quantity: 1, description: '' });
-        setColorSelection({
-            mode: 'unified',
-            unified: { name: '', image: '' },
-            body: { name: '', image: '' },
-            facade: { name: '', image: '' }
-        });
+        setBodyColor('');
+        setFacadeColor('');
+        setProductSearch('');
     };
 
     // Добавление / Обновление позиции
@@ -245,8 +244,9 @@ const PlacingAnOrder = () => {
                 variables: selectedProduct.variables,
                 conditions: selectedProduct.conditions,
                 details: selectedProduct.details,
-                // Новые данные по цвету
-                colorSelection: { ...colorSelection }
+                // Простые названия цветов (вместо сложного выбора)
+                bodyColor: (bodyColor || '').trim(),
+                facadeColor: (facadeColor || '').trim()
             };
 
             setOrder(prev => ({
@@ -305,7 +305,9 @@ const PlacingAnOrder = () => {
         const duplicated = {
             ...item,
             id: Date.now(),
-            title: item.title + ' (копия)'
+            title: item.title + ' (копия)',
+            // Убираем старые сложные данные по цвету
+            colorSelection: undefined
         };
 
         setOrder(prev => ({
@@ -535,230 +537,224 @@ const PlacingAnOrder = () => {
                             </div>
 
                             {modalType === 'catalog' ? (
-                                /* Каталог */
-                                <div className="modal-body">
-                                    <div className="modal-products-grid">
-                                        {products.map(p => (
-                                            <div key={p.id} className={`modal-product-card ${selectedProduct?.id === p.id ? 'active' : ''}`}
-                                                 onClick={() => setSelectedProduct(p)}>
-                                                <img src={p.img} alt={p.title} />
-                                                <p>{p.title}</p>
-                                            </div>
-                                        ))}
+                                /* УЛУЧШЕННАЯ МОДАЛКА КАТАЛОГА — двухпанельная + поиск */
+                                <div className="modal-body catalog-modal">
+                                    {/* Поиск по каталогу */}
+                                    <div className="catalog-search">
+                                        <input
+                                            type="text"
+                                            placeholder="Поиск по названию мебели..."
+                                            value={productSearch}
+                                            onChange={(e) => setProductSearch(e.target.value)}
+                                        />
+                                        {productSearch && (
+                                            <button 
+                                                className="search-clear" 
+                                                onClick={() => setProductSearch('')}
+                                                title="Очистить поиск"
+                                            >
+                                                ×
+                                            </button>
+                                        )}
                                     </div>
 
-                                    {selectedProduct && (
-                                        <div className="modal-form">
-                                            <h4>{selectedProduct.title}</h4>
-                                            <div className="modal-inputs">
-                                                {(selectedProduct.variables || []).map(v => (
-                                                    <label key={v.name} className="modal-field">
-                                                        <span>{v.label}</span>
-                                                        <input type="number" value={inputs[v.name] ?? ''}
-                                                               onChange={e => setInputs(prev => ({ ...prev, [v.name]: e.target.value }))} />
-                                                    </label>
-                                                ))}
-                                                {(selectedProduct.conditions || []).map(c => c.type === 'flag' && (
-                                                    <label key={c.name} className="modal-checkbox">
-                                                        <input type="checkbox" checked={!!inputs[c.name]}
-                                                               onChange={() => setInputs(prev => ({ ...prev, [c.name]: !prev[c.name] }))} />
-                                                        {c.label}
-                                                    </label>
-                                                ))}
-                                            </div>
-
-                                            <label className="modal-field" style={{ gridColumn: '1 / -1' }}>
-                                                <span>Описание позиции</span>
-                                                <textarea value={customDesc} onChange={e => setCustomDesc(e.target.value)} />
-                                            </label>
-
-                                            {/* === ВЫБОР ЦВЕТА (чистый и красивый) === */}
-                                            <div className="color-selection-block">
-                                                <div style={{ fontWeight: 700, marginBottom: '10px', fontSize: '15px', color: '#111827' }}>
-                                                    Выбор цвета
-                                                </div>
-
-                                                {/* Режим выбора */}
-                                                <div className="color-mode-toggle">
-                                                    <label className="color-mode-option">
-                                                        <input 
-                                                            type="radio" 
-                                                            name="colorMode" 
-                                                            value="unified"
-                                                            checked={colorSelection.mode === 'unified'}
-                                                            onChange={() => setColorSelection(prev => ({ ...prev, mode: 'unified' }))}
-                                                        />
-                                                        Единый цвет
-                                                    </label>
-                                                    <label className="color-mode-option">
-                                                        <input 
-                                                            type="radio" 
-                                                            name="colorMode" 
-                                                            value="separate"
-                                                            checked={colorSelection.mode === 'separate'}
-                                                            onChange={() => setColorSelection(prev => ({ ...prev, mode: 'separate' }))}
-                                                        />
-                                                        Разные цвета (корпус / фасады)
-                                                    </label>
-                                                </div>
-
-                                                {/* Популярные свотчи */}
-                                                <div>
-                                                    <div style={{ fontSize: '12.5px', marginBottom: '6px', color: '#64748b', fontWeight: 600 }}>
-                                                        Популярные декоры (Egger, Kronospan, Lamarty)
-                                                    </div>
-                                                    <div className="color-swatches">
-                                                        {FURNITURE_COLORS.map(color => {
-                                                            const isSelected = colorSelection.mode === 'unified' 
-                                                                ? colorSelection.unified.name === color.name
-                                                                : colorSelection.facade.name === color.name;
-
-                                                            return (
-                                                                <div
-                                                                    key={color.id}
-                                                                    className={`color-swatch ${isSelected ? 'selected' : ''}`}
-                                                                    onClick={() => {
-                                                                        if (colorSelection.mode === 'unified') {
-                                                                            setColorSelection(prev => ({
-                                                                                ...prev,
-                                                                                unified: { name: color.name, image: color.image }
-                                                                            }));
-                                                                        } else {
-                                                                            setColorSelection(prev => ({
-                                                                                ...prev,
-                                                                                facade: { name: color.name, image: color.image }
-                                                                            }));
-                                                                        }
-                                                                    }}
-                                                                >
-                                                                    <img src={color.image} alt={color.name} />
-                                                                    <div className="name">{color.name}</div>
+                                    <div className="catalog-split">
+                                        {/* Левая панель: список мебели (прокручиваемый) */}
+                                        <div className="products-pane">
+                                            {filteredProducts.length === 0 ? (
+                                                <div className="products-empty">Ничего не найдено</div>
+                                            ) : (
+                                                <div className="products-list">
+                                                    {filteredProducts.map(p => {
+                                                        const isActive = selectedProduct?.id === p.id;
+                                                        const price = p.price ? `${Number(p.price).toLocaleString()} сом` : '';
+                                                        return (
+                                                            <div 
+                                                                key={p.id} 
+                                                                className={`product-card ${isActive ? 'active' : ''}`}
+                                                                onClick={() => setSelectedProduct(p)}
+                                                            >
+                                                                <div className="product-card-img">
+                                                                    {p.img ? <img src={p.img} alt={p.title} /> : <div className="no-img">🪑</div>}
                                                                 </div>
-                                                            );
-                                                        })}
+                                                                <div className="product-card-info">
+                                                                    <div className="product-title">{p.title}</div>
+                                                                    {price && <div className="product-price">{price}</div>}
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Правая панель: настройка выбранной мебели */}
+                                        <div className="config-pane">
+                                            {selectedProduct ? (
+                                                <div className="config-content">
+                                                    <div className="config-header">
+                                                        <h4>{selectedProduct.title}</h4>
+                                                        {selectedProduct.price && (
+                                                            <div className="config-price">{Number(selectedProduct.price).toLocaleString()} сом / шт</div>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Параметры */}
+                                                    {(selectedProduct.variables || []).length > 0 && (
+                                                        <div className="config-section">
+                                                            <div className="section-label">Параметры</div>
+                                                            <div className="modal-inputs">
+                                                                {(selectedProduct.variables || []).map(v => (
+                                                                    <label key={v.name} className="modal-field">
+                                                                        <span>{v.label}</span>
+                                                                        <input 
+                                                                            type="number" 
+                                                                            value={inputs[v.name] ?? ''} 
+                                                                            onChange={e => setInputs(prev => ({ ...prev, [v.name]: e.target.value }))} 
+                                                                        />
+                                                                    </label>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Опции / флаги */}
+                                                    {(selectedProduct.conditions || []).some(c => c.type === 'flag') && (
+                                                        <div className="config-section">
+                                                            <div className="section-label">Опции</div>
+                                                            <div className="modal-checkboxes">
+                                                                {(selectedProduct.conditions || []).map(c => c.type === 'flag' && (
+                                                                    <label key={c.name} className="modal-checkbox">
+                                                                        <input 
+                                                                            type="checkbox" 
+                                                                            checked={!!inputs[c.name]} 
+                                                                            onChange={() => setInputs(prev => ({ ...prev, [c.name]: !prev[c.name] }))} 
+                                                                        />
+                                                                        {c.label}
+                                                                    </label>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Цвета */}
+                                                    <div className="config-section">
+                                                        <div className="section-label">Цвета</div>
+                                                        <div className="colors-row">
+                                                            <label className="modal-field">
+                                                                <span>Цвет корпуса</span>
+                                                                <input 
+                                                                    value={bodyColor} 
+                                                                    onChange={e => setBodyColor(e.target.value)} 
+                                                                    placeholder="Дуб Сонома, Венге..." 
+                                                                />
+                                                            </label>
+                                                            <label className="modal-field">
+                                                                <span>Цвет фасадов</span>
+                                                                <input 
+                                                                    value={facadeColor} 
+                                                                    onChange={e => setFacadeColor(e.target.value)} 
+                                                                    placeholder="Белый, ЛДСП..." 
+                                                                />
+                                                            </label>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Описание */}
+                                                    <div className="config-section">
+                                                        <label className="modal-field">
+                                                            <span>Описание позиции / примечание</span>
+                                                            <textarea 
+                                                                value={customDesc} 
+                                                                onChange={e => setCustomDesc(e.target.value)} 
+                                                                placeholder="Дополнительные пожелания..."
+                                                            />
+                                                        </label>
+                                                    </div>
+
+                                                    {/* Кнопки действий */}
+                                                    <div className="config-actions">
+                                                        {editingItemId && (
+                                                            <button 
+                                                                className="modal-delete-btn"
+                                                                onClick={() => {
+                                                                    setConfirmDialog({
+                                                                        message: 'Удалить эту позицию из заказа?',
+                                                                        onConfirm: () => {
+                                                                            removePosition(editingItemId);
+                                                                            closeModal();
+                                                                            setConfirmDialog(null);
+                                                                        }
+                                                                    });
+                                                                }}
+                                                            >
+                                                                Удалить позицию
+                                                            </button>
+                                                        )}
+
+                                                        <button className="modal-save-btn" onClick={savePosition}>
+                                                            {editingItemId ? 'Сохранить изменения' : 'Добавить в заказ'}
+                                                        </button>
                                                     </div>
                                                 </div>
-
-                                                {/* Ручной ввод */}
-                                                {colorSelection.mode === 'unified' ? (
-                                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                                                        <div>
-                                                            <div style={{ fontSize: '12.5px', marginBottom: '4px', fontWeight: 600 }}>Название цвета</div>
-                                                            <input 
-                                                                value={colorSelection.unified.name} 
-                                                                onChange={e => setColorSelection(prev => ({
-                                                                    ...prev, 
-                                                                    unified: { ...prev.unified, name: e.target.value }
-                                                                }))} 
-                                                                placeholder="Например: Дуб Сонома"
-                                                            />
-                                                        </div>
-                                                        <div>
-                                                            <div style={{ fontSize: '12.5px', marginBottom: '4px', fontWeight: 600 }}>Фото (URL)</div>
-                                                            <input 
-                                                                value={colorSelection.unified.image} 
-                                                                onChange={e => setColorSelection(prev => ({
-                                                                    ...prev, 
-                                                                    unified: { ...prev.unified, image: e.target.value }
-                                                                }))} 
-                                                                placeholder="https://..."
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                ) : (
-                                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                                                        <div>
-                                                            <div style={{ fontWeight: 700, marginBottom: '4px', fontSize: '13px' }}>Корпус</div>
-                                                            <input 
-                                                                value={colorSelection.body.name} 
-                                                                onChange={e => setColorSelection(prev => ({
-                                                                    ...prev, 
-                                                                    body: { ...prev.body, name: e.target.value }
-                                                                }))} 
-                                                                placeholder="Название цвета корпуса"
-                                                                style={{ marginBottom: '6px' }}
-                                                            />
-                                                            <input 
-                                                                value={colorSelection.body.image} 
-                                                                onChange={e => setColorSelection(prev => ({
-                                                                    ...prev, 
-                                                                    body: { ...prev.body, image: e.target.value }
-                                                                }))} 
-                                                                placeholder="URL фото корпуса"
-                                                            />
-                                                        </div>
-
-                                                        <div>
-                                                            <div style={{ fontWeight: 700, marginBottom: '4px', fontSize: '13px' }}>Фасады</div>
-                                                            <input 
-                                                                value={colorSelection.facade.name} 
-                                                                onChange={e => setColorSelection(prev => ({
-                                                                    ...prev, 
-                                                                    facade: { ...prev.facade, name: e.target.value }
-                                                                }))} 
-                                                                placeholder="Название цвета фасадов"
-                                                                style={{ marginBottom: '6px' }}
-                                                            />
-                                                            <input 
-                                                                value={colorSelection.facade.image} 
-                                                                onChange={e => setColorSelection(prev => ({
-                                                                    ...prev, 
-                                                                    facade: { ...prev.facade, image: e.target.value }
-                                                                }))} 
-                                                                placeholder="URL фото фасадов"
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            {editingItemId && (
-                                                <button 
-                                                    className="modal-delete-btn"
-                                                    onClick={() => {
-                                                        setConfirmDialog({
-                                                            message: 'Удалить эту позицию из заказа?',
-                                                            onConfirm: () => {
-                                                                removePosition(editingItemId);
-                                                                closeModal();
-                                                                setConfirmDialog(null);
-                                                            }
-                                                        });
-                                                    }}
-                                                >
-                                                    Удалить позицию
-                                                </button>
+                                            ) : (
+                                                <div className="config-placeholder">
+                                                    <div className="placeholder-icon">🛠️</div>
+                                                    <p>Выберите позицию слева</p>
+                                                    <small>Настройте размеры, цвета и описание выбранной мебели</small>
+                                                </div>
                                             )}
-
-                                            <button className="modal-save-btn" onClick={savePosition}>
-                                                {editingItemId ? 'Сохранить изменения' : 'Добавить в заказ'}
-                                            </button>
                                         </div>
-                                    )}
+                                    </div>
                                 </div>
                             ) : (
-                                /* Произвольная позиция */
+                                /* УЛУЧШЕННАЯ МОДАЛКА ПРОИЗВОЛЬНОЙ ПОЗИЦИИ */
                                 <div className="modal-body">
-                                    <div className="modal-form">
-                                    <label className="modal-field"><span>Название позиции *</span>
-                                        <input value={customItem.title} onChange={e => setCustomItem(p => ({...p, title: e.target.value}))} />
-                                    </label>
-                                    <label className="modal-field"><span>Цена за единицу (сом) *</span>
-                                        <input type="number" value={customItem.price} onChange={e => setCustomItem(p => ({...p, price: e.target.value}))} />
-                                    </label>
-                                    <label className="modal-field"><span>Количество</span>
-                                        <input type="number" value={customItem.quantity} onChange={e => setCustomItem(p => ({...p, quantity: e.target.value}))} />
-                                    </label>
-                                    <label className="modal-field" style={{gridColumn: '1/-1'}}>
-                                        <span>Описание</span>
-                                        <textarea value={customItem.description} onChange={e => setCustomItem(p => ({...p, description: e.target.value}))} />
-                                    </label>
+                                    <div className="modal-form custom-form">
+                                        <div className="form-row">
+                                            <label className="modal-field">
+                                                <span>Название позиции *</span>
+                                                <input 
+                                                    value={customItem.title} 
+                                                    onChange={e => setCustomItem(p => ({...p, title: e.target.value}))} 
+                                                    placeholder="Например: Стол обеденный" 
+                                                />
+                                            </label>
+                                            <label className="modal-field">
+                                                <span>Цена за единицу (сом) *</span>
+                                                <input 
+                                                    type="number" 
+                                                    value={customItem.price} 
+                                                    onChange={e => setCustomItem(p => ({...p, price: e.target.value}))} 
+                                                />
+                                            </label>
+                                        </div>
 
-                                    <button className="modal-save-btn" onClick={savePosition}>
-                                        {editingItemId ? 'Сохранить изменения' : 'Добавить в заказ'}
-                                    </button>
+                                        <div className="form-row">
+                                            <label className="modal-field">
+                                                <span>Количество</span>
+                                                <input 
+                                                    type="number" 
+                                                    value={customItem.quantity} 
+                                                    onChange={e => setCustomItem(p => ({...p, quantity: e.target.value}))} 
+                                                />
+                                            </label>
+                                        </div>
+
+                                        <label className="modal-field" style={{gridColumn: '1/-1', marginTop: '8px'}}>
+                                            <span>Описание / примечание</span>
+                                            <textarea 
+                                                value={customItem.description} 
+                                                onChange={e => setCustomItem(p => ({...p, description: e.target.value}))} 
+                                                placeholder="Дополнительная информация о позиции..."
+                                            />
+                                        </label>
+
+                                        <button className="modal-save-btn" onClick={savePosition} style={{marginTop: '20px'}}>
+                                            {editingItemId ? 'Сохранить изменения' : 'Добавить в заказ'}
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
                             )}
                         </div>
                     </div>
@@ -794,41 +790,12 @@ const PlacingAnOrder = () => {
                                         <div className="meta"><span>Описание</span> {item.description}</div>
                                     )}
 
-                                    {/* Красивое отображение цвета — унифицированный или корпус/фасады */}
-                                    {item.colorSelection && (item.colorSelection.unified?.name || item.colorSelection.body?.name) && (
-                                        <div className="color-preview">
-                                            <div className="color-preview-title">Цвет</div>
-
-                                            {item.colorSelection.mode === 'unified' ? (
-                                                <div className="color-unified">
-                                                    {item.colorSelection.unified.image && (
-                                                        <img 
-                                                            src={item.colorSelection.unified.image} 
-                                                            alt="" 
-                                                            className="color-swatch-large"
-                                                        />
-                                                    )}
-                                                    <span className="color-name">{item.colorSelection.unified.name}</span>
-                                                </div>
-                                            ) : (
-                                                <div className="color-separate">
-                                                    <div className="color-pair">
-                                                        <span className="color-pair-label">Корпус</span>
-                                                        {item.colorSelection.body?.image && (
-                                                            <img src={item.colorSelection.body.image} alt="" className="color-swatch-small" />
-                                                        )}
-                                                        <span className="color-name">{item.colorSelection.body?.name || '—'}</span>
-                                                    </div>
-                                                    <div className="color-pair">
-                                                        <span className="color-pair-label">Фасады</span>
-                                                        {item.colorSelection.facade?.image && (
-                                                            <img src={item.colorSelection.facade.image} alt="" className="color-swatch-small" />
-                                                        )}
-                                                        <span className="color-name">{item.colorSelection.facade?.name || '—'}</span>
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
+                                    {/* Простое отображение названий цветов (корпус / фасады) */}
+                                    {item.bodyColor && (
+                                        <div className="meta"><span>Цвет корпуса</span> {item.bodyColor}</div>
+                                    )}
+                                    {item.facadeColor && (
+                                        <div className="meta"><span>Цвет фасадов</span> {item.facadeColor}</div>
                                     )}
 
                                     <div className="price-row">
