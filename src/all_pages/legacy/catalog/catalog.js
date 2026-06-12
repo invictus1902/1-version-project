@@ -112,13 +112,13 @@ const Catalog = () => {
 
             {/* Модальное окно с калькулятором */}
             {selectedProduct && (
-                <div className="modal-overlay" onClick={() => {
+                <div className="catalog-modal-overlay" onClick={() => {
                     selectProduct(null);
                     setIsImageViewerOpen(false);
                 }}>
-                    <div className="modal-content" onClick={e => e.stopPropagation()}>
+                    <div className="catalog-modal-content" onClick={e => e.stopPropagation()}>
                         <button 
-                            className="modal-close" 
+                            className="catalog-modal-close" 
                             onClick={() => {
                                 selectProduct(null);
                                 setIsImageViewerOpen(false);
@@ -127,25 +127,25 @@ const Catalog = () => {
                             ×
                         </button>
 
-                        <div className="modal-header">
+                        <div className="catalog-modal-header">
                             <h2>{selectedProduct.title}</h2>
                             {selectedProduct.price && (
-                                <div className="modal-price">{selectedProduct.price} сом</div>
+                                <div className="catalog-modal-price">{selectedProduct.price} сом</div>
                             )}
                         </div>
 
                         {/* Кликабельное фото для просмотра в большом размере */}
                         {selectedProduct.img && (
                             <div 
-                                className="modal-image-wrapper"
+                                className="catalog-modal-image-wrapper"
                                 onClick={() => setIsImageViewerOpen(true)}
                             >
                                 <img 
                                     src={selectedProduct.img} 
                                     alt={selectedProduct.title} 
-                                    className="modal-product-image"
+                                    className="catalog-modal-product-image"
                                 />
-                                <div className="image-hint">Нажмите, чтобы увеличить</div>
+                                <div className="catalog-image-hint">Нажмите, чтобы увеличить</div>
                             </div>
                         )}
 
@@ -223,12 +223,12 @@ const Catalog = () => {
             {/* Лайтбокс для просмотра фото */}
             {isImageViewerOpen && selectedProduct?.img && (
                 <div 
-                    className="image-viewer-overlay" 
+                    className="catalog-image-viewer-overlay" 
                     onClick={() => setIsImageViewerOpen(false)}
                 >
-                    <div className="image-viewer-content" onClick={e => e.stopPropagation()}>
+                    <div className="catalog-image-viewer-content" onClick={e => e.stopPropagation()}>
                         <button 
-                            className="image-viewer-close"
+                            className="catalog-image-viewer-close"
                             onClick={() => setIsImageViewerOpen(false)}
                         >
                             ×
@@ -236,9 +236,9 @@ const Catalog = () => {
                         <img 
                             src={selectedProduct.img} 
                             alt={selectedProduct.title} 
-                            className="image-viewer-img"
+                            className="catalog-image-viewer-img"
                         />
-                        <div className="image-viewer-hint">Кликните в любом месте, чтобы закрыть</div>
+                        <div className="catalog-image-viewer-hint">Кликните в любом месте, чтобы закрыть</div>
                     </div>
                 </div>
             )}

@@ -193,8 +193,10 @@
   letter-spacing: -0.2px;
 }
 
-/* Modal */
-.modal-overlay {
+/* ========================================
+   КАТАЛОГ: МОДАЛЬНОЕ ОКНО КАЛЬКУЛЯТОРА (изолированные классы)
+   ======================================== */
+.catalog-modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -209,7 +211,7 @@
   padding: 20px;
 }
 
-.modal-content {
+.catalog-modal-content {
   background: white;
   border-radius: 20px;
   width: 100%;
@@ -219,9 +221,10 @@
   position: relative;
   box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
   padding: 32px;
+  box-sizing: border-box;
 }
 
-.modal-close {
+.catalog-modal-close {
   position: absolute;
   top: 16px;
   right: 20px;
@@ -232,25 +235,27 @@
   cursor: pointer;
   line-height: 1;
   transition: color 0.2s ease;
+  padding: 0 4px;
+  z-index: 10;
 }
 
-.modal-close:hover {
+.catalog-modal-close:hover {
   color: #374151;
 }
 
-.modal-header {
+.catalog-modal-header {
   margin-bottom: 24px;
   padding-right: 40px;
 }
 
-.modal-header h2 {
+.catalog-modal-header h2 {
   font-size: 26px;
   font-weight: 700;
   color: #111827;
   margin: 0 0 4px 0;
 }
 
-.modal-price {
+.catalog-modal-price {
   font-size: 18px;
   font-weight: 600;
   color: #3b82f6;
@@ -382,8 +387,8 @@
   color: #475569;
 }
 
-/* === Фото в модалке === */
-.modal-image-wrapper {
+/* === Фото в модалке калькулятора === */
+.catalog-modal-image-wrapper {
   position: relative;
   margin-bottom: 24px;
   cursor: pointer;
@@ -392,7 +397,7 @@
   background: #f8fafc;
 }
 
-.modal-product-image {
+.catalog-modal-product-image {
   width: 100%;
   max-height: 280px;
   object-fit: contain;
@@ -400,11 +405,11 @@
   transition: transform 0.3s ease;
 }
 
-.modal-image-wrapper:hover .modal-product-image {
+.catalog-modal-image-wrapper:hover .catalog-modal-product-image {
   transform: scale(1.02);
 }
 
-.image-hint {
+.catalog-image-hint {
   position: absolute;
   bottom: 8px;
   right: 12px;
@@ -417,8 +422,8 @@
   pointer-events: none;
 }
 
-/* === Лайтбокс (просмотр фото) - Улучшенный === */
-.image-viewer-overlay {
+/* === Лайтбокс (просмотр фото) — изолированный + исправленные размеры === */
+.catalog-image-viewer-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -434,22 +439,25 @@
   backdrop-filter: blur(4px);
 }
 
-/* Контейнер, который занимает ~90% экрана */
-.image-viewer-content {
+/* Контейнер лайтбокса: гибкий, не квадратный принудительно.
+   Исправлено противоречие height/width + max-* */
+.catalog-image-viewer-content {
   position: relative;
-  width: 90vw;
-  height: 90vh;
-  max-width: 1600px;
-  max-height: 1600px;
+  width: 100%;
+  max-width: 92vw;
+  height: auto;
+  max-height: 88vh;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-/* Само фото — всегда старается заполнить почти весь контейнер */
-.image-viewer-img {
-  width: 100%;
-  height: 100%;
+/* Фото: ограничено контейнером, но сохраняет пропорции */
+.catalog-image-viewer-img {
+  max-width: 100%;
+  max-height: 88vh;
+  width: auto;
+  height: auto;
   object-fit: contain;
   border-radius: 4px;
   box-shadow: 0 10px 30px rgb(0 0 0 / 0.4);
@@ -458,21 +466,21 @@
   display: block;
 }
 
-.image-viewer-img:hover {
+.catalog-image-viewer-img:hover {
   transform: scale(1.005);
 }
 
-.image-viewer-close {
+.catalog-image-viewer-close {
   position: fixed;
-  top: 20px;
-  right: 20px;
+  top: 16px;
+  right: 16px;
   background: rgba(255, 255, 255, 0.95);
   color: #1e2937;
   border: none;
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  font-size: 30px;
+  font-size: 28px;
   line-height: 1;
   cursor: pointer;
   display: flex;
@@ -483,27 +491,30 @@
   transition: all 0.2s ease;
 }
 
-.image-viewer-close:hover {
+.catalog-image-viewer-close:hover {
   background: white;
   transform: scale(1.08);
 }
 
 /* Подсказка */
-.image-viewer-hint {
+.catalog-image-viewer-hint {
   position: absolute;
-  bottom: 16px;
+  bottom: 12px;
   left: 50%;
   transform: translateX(-50%);
   background: rgba(15, 23, 42, 0.75);
   color: #e2e8f0;
-  font-size: 13px;
-  padding: 6px 14px;
+  font-size: 12px;
+  padding: 5px 12px;
   border-radius: 20px;
   pointer-events: none;
   opacity: 0.85;
+  white-space: nowrap;
 }
 
-/* Responsive */
+/* ========================================
+   RESPONSIVE ДЛЯ МОДАЛОК КАТАЛОГА (улучшенная адаптивка)
+   ======================================== */
 @media (max-width: 768px) {
   .catalog-header h1 {
     font-size: 32px;
@@ -514,7 +525,107 @@
     gap: 16px;
   }
 
-  .modal-content {
-    padding: 24px 20px;
+  .catalog-modal-content {
+    padding: 24px 18px;
+    max-height: 92vh;
+  }
+
+  .catalog-modal-header {
+    margin-bottom: 16px;
+    padding-right: 32px;
+  }
+
+  .catalog-modal-header h2 {
+    font-size: 22px;
+  }
+
+  .catalog-modal-close {
+    top: 12px;
+    right: 14px;
+    font-size: 28px;
+  }
+
+  .catalog-modal-image-wrapper {
+    margin-bottom: 16px;
+  }
+
+  .catalog-modal-product-image {
+    max-height: 220px;
+  }
+
+  /* Сетки формы становятся уже на планшетах */
+  .inputs-grid {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+  }
+
+  .checkbox-grid {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .catalog-modal-overlay {
+    padding: 10px;
+  }
+
+  .catalog-modal-content {
+    padding: 18px 14px;
+    border-radius: 16px;
+  }
+
+  .catalog-modal-header h2 {
+    font-size: 20px;
+  }
+
+  .catalog-modal-close {
+    font-size: 26px;
+  }
+
+  .catalog-modal-product-image {
+    max-height: 180px;
+  }
+
+  /* На очень узких экранах — inputs в одну колонку */
+  .inputs-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .checkbox-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .results-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .catalog-image-viewer-overlay {
+    padding: 8px;
+  }
+
+  .catalog-image-viewer-close {
+    width: 40px;
+    height: 40px;
+    font-size: 24px;
+    top: 10px;
+    right: 10px;
+  }
+
+  .catalog-image-viewer-hint {
+    font-size: 11px;
+    padding: 4px 10px;
+    bottom: 8px;
+  }
+}
+
+@media (max-width: 360px) {
+  .catalog-modal-content {
+    padding: 14px 12px;
+  }
+
+  .calculate-btn {
+    padding: 14px;
+    font-size: 15px;
   }
 }

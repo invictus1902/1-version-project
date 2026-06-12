@@ -452,6 +452,7 @@ const Admin = () => {
             <div className="admin__top">
                 <div className="admin__top__left">
                     <h1>Панель администратора</h1>
+                    <p className="admin-subtitle">Управление сменами и сотрудниками в реальном времени</p>
 
                     {/* ==================== ФИЛЬТРАЦИЯ СМЕН (упрощённая и удобная) ==================== */}
                     <div className="admin__filters">
@@ -584,7 +585,7 @@ const Admin = () => {
                                                     className="btn-start"
                                                     disabled={isUserStartPending(user.id)}
                                                 >
-                                                    {isUserStartPending(user.id) ? '⏳ Загрузка...' : '▶ Начать смену'}
+                                                    {isUserStartPending(user.id) ? '⏳ Загрузка...' : '▶ Старт'}
                                                 </button>
                                             </span>
                                         </div>
@@ -612,9 +613,10 @@ const Admin = () => {
                                                     <button 
                                                         onClick={() => openEditSessionModal(session)} 
                                                         className="btn-edit"
+                                                        title="Редактировать смену"
                                                         disabled={isShiftActionPending(session.id)}
                                                     >
-                                                        ✎ Редактировать
+                                                        ✎
                                                     </button>
                                                     <button 
                                                         onClick={() => handleDeleteShift(session.id)} 
@@ -644,7 +646,7 @@ const Admin = () => {
                                                     className="btn-start"
                                                     disabled={isUserStartPending(user.id)}
                                                 >
-                                                    {isUserStartPending(user.id) ? '⏳ Загрузка...' : '▶ Начать новую смену'}
+                                                    {isUserStartPending(user.id) ? '⏳ Загрузка...' : '▶ Новая'}
                                                 </button>
                                             </span>
                                         </div>
